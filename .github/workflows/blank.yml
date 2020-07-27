@@ -1,33 +1,57 @@
-# This is a basic workflow to help you get started with Actions
+include $(TOPDIR)/rules.mk
 
-name: CI
+PKG_NAME:=luci-app-ssr-plus
+PKG_VERSION:=180
+PKG_RELEASE:=2
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+include $(INCLUDE_DIR)/package.mk
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
-jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+define Package/$(PKG_NAME)/config
+config PACKAGE_$(PKG_NAME)_INCLUDE_V2ray_plugin
+	bool "Include Shadowsocks V2ray Plugin"
+	default y if i386||x86_64||arm||aarch64
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
+config PACKAGE_$(PKG_NAME)_INCLUDE_V2ray
+	bool "Include V2ray"
+	default y if i386||x86_64||arm||aarch64
 
-    # Runs a single command using the runners shell
-    - name: Run a one-line script
-      run: echo Hello, world!
+config PACKAGE_$(PKG_NAME)_INCLUDE_Trojan
+	bool "Include Trojan"
+	default y if i386||x86_64||arm||aarch64
+	
+config PACKAGE_$(PKG_NAME)_INCLUDE_Redsocks2
+	bool "Include Redsocks2"
+	default y if i386||x86_64||arm||aarch64
 
-    # Runs a set of commands using the runners shell
-    - name: Run a multi-line script
-      run: |
-        echo Add other actions to build,
-        echo test, and deploy your project.
+config PACKAGE_$(PKG_NAME)_INCLUDE_Kcptun
+	bool "Include Kcptun"
+	default n
+
+config PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Server
+	bool "Include ShadowsocksR Server"
+	default y if i386||x86_64||arm||aarch64
+endef
+
+PKG_CONFIG_DEPENDS:= \
+	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_V2ray_plugin \
+	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_V2ray \
+	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Trojan \
+	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Redsocks2 \
+	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_Kcptun \
+	CONFIG_PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Server
+
+LUCI_TITLE:=SS/SSR/V2Ray/Trojan/Socks5/Tun LuCI interface
+LUCI_PKGARCH:=all
+LUCI_DEPENDS:=+shadowsocksr-libev-alt +ipset +ip-full +iptables-mod-tproxy +dnsmasq-full +coreutils +coreutils-base64 +pdnsd-alt +wget +lua +libuci-lua \
+	+microsocks +dns2socks +shadowsocks-libev-ss-local +shadowsocksr-libev-ssr-local +shadowsocks-libev-ss-redir +simple-obfs +tcpping +resolveip\
+	+PACKAGE_$(PKG_NAME)_INCLUDE_V2ray_plugin:v2ray-plugin \
+	+PACKAGE_$(PKG_NAME)_INCLUDE_V2ray:v2ray \
+	+PACKAGE_$(PKG_NAME)_INCLUDE_Trojan:trojan \
+	+PACKAGE_$(PKG_NAME)_INCLUDE_Trojan:ipt2socks \
+	+PACKAGE_$(PKG_NAME)_INCLUDE_Redsocks2:redsocks2 \
+	+PACKAGE_$(PKG_NAME)_INCLUDE_Kcptun:kcptun-client \
+	+PACKAGE_$(PKG_NAME)_INCLUDE_ShadowsocksR_Server:shadowsocksr-libev-server
+
+include $(TOPDIR)/feeds/luci/luci.mk
+
+# call BuildPackage - OpenWrt buildroot signature
